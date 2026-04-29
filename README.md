@@ -6,6 +6,8 @@
 
 **🇬🇧 English** &nbsp;|&nbsp; **🇩🇪 [Deutsch](README.de.md)**
 
+![AlphaForge Trading Bot](crypto_bot.png)
+
 Fully autonomous AI trading bot for **Crypto, Forex and Equities**.  
 Supports 10+ crypto exchanges (Binance, Bybit, OKX, Kraken, Coinbase...) and Forex brokers (IG, OANDA, Alpaca, IBKR).
 
