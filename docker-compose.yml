@@ -1,0 +1,16 @@
+services:
+  bot:
+    build: .
+    image: trading-bot:latest
+    container_name: crypto-bot
+    env_file: .env
+    volumes:
+      - ./data_store:/app/data_store   # SQLite DB persistent
+      - ./logs:/app/logs               # Log-Files persistent
+      - ./ai:/app/ai                   # Trainiertes Modell persistent
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"

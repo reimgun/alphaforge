@@ -1,0 +1,49 @@
+# ── QNAP TS-451 Optimiertes Dockerfile ───────────────────────────────────────
+# Ziel:  Dauerbetrieb auf Intel Celeron J1900, x86_64
+# Ohne:  PyTorch/LSTM (kein AVX2 auf J1900 → Absturz)
+# Mit:   XGBoost, alle Trading-Features, Dashboard, Telegram
+#
+# Build:
+#   docker build -f Dockerfile.qnap -t trading-bot:qnap .
+#
+# Auf QNAP (via Container Station oder SSH):
+#   docker-compose -f docker-compose.qnap.yml up -d
+
+FROM python:3.12-slim
+
+# System-Dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Leichtere Requirements ohne PyTorch
+COPY requirements.qnap.txt .
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.qnap.txt
+
+# arch (GARCH) — optional für Forex-Bot GARCH-Volatilitätsfilter.
+# Hat pre-built Wheels für x86_64 Linux. Falls Installation fehlschlägt
+# (kein Wheel, Kompilierung schlägt fehl), fällt der Bot automatisch
+# auf Rolling-Std zurück — kein funktionaler Ausfall.
+RUN pip install --no-cache-dir --only-binary :all: arch>=6.0.0 || \
+    echo "arch nicht verfügbar — GARCH Fallback aktiv (rolling-std)"
+
+# Quellcode
+COPY . .
+
+# Persistente Verzeichnisse
+RUN mkdir -p data_store logs crypto_bot/ai reports
+
+# Nicht als root laufen
+RUN useradd -m -u 1000 botuser && chown -R botuser:botuser /app
+USER botuser
+
+# Healthcheck — prüft ob bot.log in den letzten 70 Min geschrieben wurde (Bot-Zyklus = 1h)
+HEALTHCHECK --interval=5m --timeout=10s --retries=3 \
+    CMD python -c "import os,time; f='logs/bot.log'; \
+        assert os.path.exists(f) and (time.time()-os.path.getmtime(f))<4200" || exit 1
+
+CMD ["python", "-m", "crypto_bot.bot"]

@@ -1,0 +1,43 @@
+# QNAP-optimierte Requirements — ohne PyTorch/LSTM
+# Der Celeron J1900 im TS-451 hat kein AVX2 — torch würde abstürzen.
+# LSTM wird automatisch deaktiviert (Bot erkennt fehlendes torch und fährt fort).
+# Training auf Mac, Inferenz auf QNAP.
+
+ccxt==4.3.89
+pandas==2.2.2
+numpy==1.26.4
+python-dotenv==1.0.1
+requests==2.31.0
+rich==13.7.1
+scikit-learn==1.4.2
+xgboost==2.0.3
+joblib==1.4.0
+anthropic==0.25.0
+
+# LLM Providers (optional)
+openai>=1.30.0
+
+# Dashboard
+fastapi>=0.110.0
+uvicorn[standard]>=0.29.0
+streamlit>=1.33.0
+plotly>=5.20.0
+httpx>=0.27.0
+
+# WebSocket
+websockets>=12.0
+
+# Encrypted Config (optional)
+cryptography>=42.0.0
+
+# OHLCV Cache
+pyarrow>=15.0.0
+
+# PDF Reports
+fpdf2>=2.7.0
+
+# Scipy
+scipy>=1.12.0
+
+# Forex data fallback (yfinance used when broker API returns 403)
+yfinance>=0.2.0

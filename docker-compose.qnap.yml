@@ -1,0 +1,73 @@
+# ── Docker Compose für QNAP TS-451 ───────────────────────────────────────────
+# Starten:  docker-compose -f docker-compose.qnap.yml up -d
+# Stoppen:  docker-compose -f docker-compose.qnap.yml down
+# Logs:     docker-compose -f docker-compose.qnap.yml logs -f
+# Status:   docker-compose -f docker-compose.qnap.yml ps
+
+services:
+  bot:
+    build:
+      context: .
+      dockerfile: Dockerfile.qnap
+    image: trading-bot:qnap
+    container_name: crypto-bot
+    env_file: .env
+
+    environment:
+      # LSTM deaktivieren — kein PyTorch auf Celeron J1900
+      - FEATURE_LSTM=false
+      # Auto-Training deaktivieren — Modell wird vom WSL übertragen
+      - AUTO_TRAIN=false
+
+    volumes:
+      # Persistente Daten — überleben Container-Neustarts
+      - ./data_store:/app/data_store   # SQLite Trades-DB + OHLCV-Cache
+      - ./logs:/app/logs               # Bot-Logs
+      - ./ai:/app/ai                   # Trainiertes ML-Modell (model.joblib)
+      - ./reports:/app/reports         # PDF-Reports
+
+    # Ressourcen-Limits für Celeron J1900 / 8 GB RAM
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"      # Max 2 der 4 Kerne nutzen
+          memory: 1500M    # Max 1.5 GB RAM
+        reservations:
+          memory: 400M     # Mindest-RAM reservieren
+
+    # Automatischer Neustart
+    restart: unless-stopped
+
+    # Log-Rotation
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  # Optional: Dashboard als separater Service
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile.qnap
+    image: trading-bot:qnap
+    container_name: trading-dashboard
+    env_file: .env
+    command: ["python", "-m", "uvicorn", "dashboard.api:app", "--host", "0.0.0.0", "--port", "8000"]
+    ports:
+      - "8000:8000"    # REST API — http://qnap-ip:8000
+    volumes:
+      - ./data_store:/app/data_store
+      - ./logs:/app/logs
+      - ./ai:/app/ai
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "3"

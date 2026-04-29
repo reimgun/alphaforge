@@ -1,0 +1,20 @@
+.env
+**/.env
+!.env.template
+!**/.env.template
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# Runtime-Daten — ändern sich im Betrieb, kein git pull möglich
+data_store/
+logs/
+
+# Trainierte ML-Modelle (lokal trainieren, nicht committen)
+*.joblib
+
+# Persönliche Claude-Context-Datei
+CLAUDE.md
+bot_analysis.md
